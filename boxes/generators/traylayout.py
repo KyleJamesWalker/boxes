@@ -229,35 +229,6 @@ to remove the floor for this compartment.
         lx = len(self.x)
         ly = len(self.y)
 
-        le_f = re_f = ole_f = ore_f = "f"
-        le_F = re_F = ole_F = ore_F = "F"
-        if self.hi > self.h:
-            # if hi is bigger limit finger joints at the outside to h
-            le_f = boxes.edges.CompoundEdge(self, "ef", [self.hi-self.h, self.h])
-            re_f = boxes.edges.CompoundEdge(self, "fe", [self.h, self.hi-self.h])
-            le_F = boxes.edges.CompoundEdge(self, "eF", [self.hi-self.h, self.h])
-            re_F = boxes.edges.CompoundEdge(self, "Fe", [self.h, self.hi-self.h])
-        elif self.hi < self.h:
-            # if hi is smaller limit the fingerjoint in the outside walls to hi
-            ole_f = boxes.edges.CompoundEdge(self, "Ef", [self.h-self.hi, self.hi])
-            ore_f = boxes.edges.CompoundEdge(self, "fE", [self.hi, self.h-self.hi])
-            ole_F = boxes.edges.CompoundEdge(self, "EF", [self.h-self.hi, self.hi])
-            ore_F = boxes.edges.CompoundEdge(self, "FE", [self.hi, self.h-self.hi])
-
-        # Edges for h_alt
-        ale_f = are_f = aole_f = aore_f = "f"
-        ale_F = are_F = aole_F = aore_F = "F"
-        if self.h_alt > self.h:
-            ale_f = boxes.edges.CompoundEdge(self, "ef", [self.h_alt-self.h, self.h])
-            are_f = boxes.edges.CompoundEdge(self, "fe", [self.h, self.h_alt-self.h])
-            ale_F = boxes.edges.CompoundEdge(self, "eF", [self.h_alt-self.h, self.h])
-            are_F = boxes.edges.CompoundEdge(self, "Fe", [self.h, self.h_alt-self.h])
-        elif self.h_alt < self.h:
-            aole_f = boxes.edges.CompoundEdge(self, "Ef", [self.h-self.h_alt, self.h_alt])
-            aore_f = boxes.edges.CompoundEdge(self, "fE", [self.h_alt, self.h-self.h_alt])
-            aole_F = boxes.edges.CompoundEdge(self, "EF", [self.h-self.h_alt, self.h_alt])
-            aore_F = boxes.edges.CompoundEdge(self, "FE", [self.h_alt, self.h-self.h_alt])
-
         self.ctx.save()
 
         # Horizontal Walls
@@ -306,19 +277,15 @@ to remove the floor for this compartment.
                     if vw == 1:
                         hv = self.get_hv(end + 1, y)
                         if self.hFloor(end, y) == 0 and self.hFloor(end + 1, y) == 0:
-                            bottom_edges.append(boxes.edges.CrossingFingerHoleEdge(self, hv, outset=self.thickness))
+                            bottom_edges.append(boxes.edges.CrossingFingerHoleEdge(self, min(h, hv), outset=self.thickness))
                         else:
-                            bottom_edges.append(boxes.edges.CrossingFingerHoleEdge(self, hv))
+                            bottom_edges.append(boxes.edges.CrossingFingerHoleEdge(self, min(h, hv)))
                         top_edges.append("e")
                         lengths.append(self.thickness)
                     elif vw == 2:
                         hv = self.get_hv(end + 1, y)
-                        if h < hv:
-                            bottom_edges.append("e")
-                            top_edges.append(boxes.edges.Slot(self, h / 2.0))
-                        else:
-                            bottom_edges.append(boxes.edges.Slot(self, hv / 2.0))
-                            top_edges.append("e")
+                        bottom_edges.append("e")
+                        top_edges.append(boxes.edges.Slot(self, min(h, hv) / 2.0))
                         lengths.append(self.thickness)
                     end += 1
 
@@ -328,12 +295,17 @@ to remove the floor for this compartment.
                     bottom_edges.pop()
                     top_edges.pop()
 
-                if self.hwalls[y][start] == 2:
-                    le = ale_f if start == 0 and y not in (0, ly) else (aole_f if start > 0 and y in (0, ly) else "f")
-                    re = are_f if end == lx and y not in (0, ly) else (aore_f if end < lx and y in (0, ly) else "f")
+                hv_start = self.get_hv(start, y)
+                if h > hv_start:
+                    le = boxes.edges.CompoundEdge(self, "ef", [h - hv_start, hv_start])
                 else:
-                    le = le_f if start == 0 and y not in (0, ly) else (ole_f if start > 0 and y in (0, ly) else "f")
-                    re = re_f if end == lx and y not in (0, ly) else (ore_f if end < lx and y in (0, ly) else "f")
+                    le = "f"
+                
+                hv_end = self.get_hv(end, y)
+                if h > hv_end:
+                    re = boxes.edges.CompoundEdge(self, "fe", [hv_end, h - hv_end])
+                else:
+                    re = "f"
 
                 self.rectangularWall(sum(lengths), h, [
                     boxes.edges.CompoundEdge(self, bottom_edges, lengths),
@@ -393,19 +365,15 @@ to remove the floor for this compartment.
                     if hw == 1:
                         hh = self.get_hh(x, end + 1)
                         if self.vFloor(x, end) == 0 and self.vFloor(x, end + 1) == 0:
-                            bottom_edges.append(boxes.edges.CrossingFingerHoleEdge(self, hh, outset=self.thickness))
+                            bottom_edges.append(boxes.edges.CrossingFingerHoleEdge(self, min(h, hh), outset=self.thickness))
                         else:
-                            bottom_edges.append(boxes.edges.CrossingFingerHoleEdge(self, hh))
+                            bottom_edges.append(boxes.edges.CrossingFingerHoleEdge(self, min(h, hh)))
                         top_edges.append("e")
                         lengths.append(self.thickness)
                     elif hw == 2:
                         hh = self.get_hh(x, end + 1)
-                        if h < hh:
-                            bottom_edges.append("e")
-                            top_edges.append(boxes.edges.Slot(self, h / 2.0))
-                        else:
-                            bottom_edges.append(boxes.edges.Slot(self, hh / 2.0))
-                            top_edges.append("e")
+                        bottom_edges.append(boxes.edges.Slot(self, min(h, hh) / 2.0))
+                        top_edges.append("e")
                         lengths.append(self.thickness)
                     end += 1
 
@@ -415,16 +383,23 @@ to remove the floor for this compartment.
                     bottom_edges.pop()
                     top_edges.pop()
 
-                if self.vwalls[start][x] == 2:
-                    les = ["e", ale_F, ale_f] if start == 0 and x not in (0, lx) else (
-                        ["e", aole_F, aole_f] if start > 0 and x in (0, lx) else "eFf")
-                    res = ["e", are_F, are_f] if end == ly and x not in (0, lx) else (
-                        ["e", aore_F, aore_f] if end < ly and x in (0, lx) else "eFf")
+                hh_start = self.get_hh(x, start)
+                if h > hh_start:
+                    le_f = boxes.edges.CompoundEdge(self, "ef", [h - hh_start, hh_start])
+                    le_F = boxes.edges.CompoundEdge(self, "eF", [h - hh_start, hh_start])
                 else:
-                    les = ["e", le_F, le_f] if start == 0 and x not in (0, lx) else (
-                        ["e", ole_F, ole_f] if start > 0 and x in (0, lx) else "eFf")
-                    res = ["e", re_F, re_f] if end == ly and x not in (0, lx) else (
-                        ["e", ore_F, ore_f] if end < ly and x in (0, lx) else "eFf")
+                    le_f = "f"
+                    le_F = "F"
+                les = ["e", le_F, le_f]
+
+                hh_end = self.get_hh(x, end)
+                if h > hh_end:
+                    re_f = boxes.edges.CompoundEdge(self, "fe", [hh_end, h - hh_end])
+                    re_F = boxes.edges.CompoundEdge(self, "Fe", [hh_end, h - hh_end])
+                else:
+                    re_f = "f"
+                    re_F = "F"
+                res = ["e", re_F, re_f]
 
                 self.rectangularWall(sum(lengths), h, [
                     boxes.edges.CompoundEdge(self, bottom_edges, lengths),
