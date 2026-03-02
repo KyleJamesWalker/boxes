@@ -293,7 +293,7 @@ to remove the floor for this compartment.
                     self.edges["s"].depth = self.hi / 2.0
 
                 end = start
-
+                vw = 0
                 while end < lx and self.hwalls[y][end] == self.hwalls[y][start]:
                     if self.hFloor(end, y):
                         bottom_edges.append("f")
@@ -380,7 +380,7 @@ to remove the floor for this compartment.
                     self.edges["s"].depth = self.hi / 2.0
 
                 end = start
-
+                hw = 0
                 while end < ly and self.vwalls[end][x] == self.vwalls[start][x]:
                     if self.vFloor(x, end):
                         bottom_edges.append("f")
@@ -392,13 +392,10 @@ to remove the floor for this compartment.
                     hw = self.hWalls(x, end + 1)
                     if hw == 1:
                         hh = self.get_hh(x, end + 1)
-                        # Vertical walls have fingers on their sides to meet horizontal walls
-                        # So they don't need CrossingFingerHoleEdge themselves.
-                        # Instead, Horizontal walls have CrossingFingerHoleEdge.
-                        # But wait, if it's a T-junction where Vertical meets Horizontal...
-                        # Horizontal has holes in face, Vertical has fingers on side.
-                        # So Vertical wall needs NOTHING on its top/bottom edge for this.
-                        bottom_edges.append("e" if self.vFloor(x, end) == 0 and self.vFloor(x, end + 1) == 0 else "e")
+                        if self.vFloor(x, end) == 0 and self.vFloor(x, end + 1) == 0:
+                            bottom_edges.append(boxes.edges.CrossingFingerHoleEdge(self, hh, outset=self.thickness))
+                        else:
+                            bottom_edges.append(boxes.edges.CrossingFingerHoleEdge(self, hh))
                         top_edges.append("e")
                         lengths.append(self.thickness)
                     elif hw == 2:
