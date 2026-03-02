@@ -93,7 +93,10 @@ def filter_url(url, non_default_args):
     new_args = []
     args_to_ignore = ["qr_code", "format"]
     for arg in args:
-        a, b = arg.split('=')
+        kv = arg.split('=', 1)
+        if len(kv) != 2:
+            continue
+        a, b = kv
         if a.strip() in args_to_ignore:
             continue
         if a in non_default_args:
@@ -665,7 +668,7 @@ class BServer:
         if render == "0":
             defaults = {}
             for a in args:
-                kv = a.split('=')
+                kv = a.split('=', 1)
                 if len(kv) == 2:
                     k, v = kv
                     defaults[k] = html.escape(v, True)
