@@ -102,10 +102,7 @@ You can replace the space characters representing the floor by a "X" to remove t
         super().__init__()
         self.addSettingsArgs(boxes.edges.FingerJointSettings)
         self.addSettingsArgs(lids.LidSettings)
-        self.buildArgParser("h", "hi", "outside", "sx", "sy")
-        self.argparser.add_argument(
-            "--h_alt", action="store", type=float, default=25.0,
-            help="Alternate inside wall height (mm). Use '=' (horizontal) or ':' (vertical) in layout text.")
+        self.buildArgParser("h", "hi", "hi_alt", "outside", "sx", "sy", hi_alt=25.0)
         self.argparser.add_argument(
             "--layout", action="store", type=str, default="\n",
             help="""* Set **sx** and **sy** before editing this!
@@ -159,9 +156,9 @@ to remove the floor for this compartment.
             return self.h
         h_v = 0.0
         if y > 0 and self.vwalls[y - 1][x]:
-            h_v = max(h_v, self.h_alt if self.vwalls[y - 1][x] == 2 else self.hi)
+            h_v = max(h_v, self.hi_alt if self.vwalls[y - 1][x] == 2 else self.hi)
         if y < len(self.y) and self.vwalls[y][x]:
-            h_v = max(h_v, self.h_alt if self.vwalls[y][x] == 2 else self.hi)
+            h_v = max(h_v, self.hi_alt if self.vwalls[y][x] == 2 else self.hi)
         return h_v
 
     def get_hh(self, x: int, y: int) -> float:
@@ -170,9 +167,9 @@ to remove the floor for this compartment.
             return self.h
         h_h = 0.0
         if x > 0 and self.hwalls[y][x - 1]:
-            h_h = max(h_h, self.h_alt if self.hwalls[y][x - 1] == 2 else self.hi)
+            h_h = max(h_h, self.hi_alt if self.hwalls[y][x - 1] == 2 else self.hi)
         if x < len(self.x) and self.hwalls[y][x]:
-            h_h = max(h_h, self.h_alt if self.hwalls[y][x] == 2 else self.hi)
+            h_h = max(h_h, self.hi_alt if self.hwalls[y][x] == 2 else self.hi)
         return h_h
 
     @restore
@@ -205,12 +202,12 @@ to remove the floor for this compartment.
             if self.hi:
                 self.hi = self.adjustSize(self.hi, e2=False)
 
-            h_alt_val = getattr(self, "h_alt", None)
-            if h_alt_val:
-                self.h_alt = self.adjustSize(h_alt_val, e2=False)
+            hi_alt_val = getattr(self, "hi_alt", None)
+            if hi_alt_val:
+                self.hi_alt = self.adjustSize(hi_alt_val, e2=False)
 
         self.hi = self.hi or self.h
-        self.h_alt = getattr(self, "h_alt", self.hi)
+        self.hi_alt = getattr(self, "hi_alt", self.hi)
         self.edges["s"] = boxes.edges.Slot(self, self.hi / 2.0)
         self.edges["C"] = boxes.edges.CrossingFingerHoleEdge(self, self.hi)
         self.edges["D"] = boxes.edges.CrossingFingerHoleEdge(self, self.hi, outset=self.thickness)
@@ -248,10 +245,10 @@ to remove the floor for this compartment.
                     break
 
                 if self.hwalls[y][start] == 2:
-                    h = self.h_alt
-                    self.edges["C"].height = self.h_alt
-                    self.edges["D"].height = self.h_alt
-                    self.edges["s"].depth = self.h_alt / 2.0
+                    h = self.hi_alt
+                    self.edges["C"].height = self.hi_alt
+                    self.edges["D"].height = self.hi_alt
+                    self.edges["s"].depth = self.hi_alt / 2.0
                 elif y == 0 or y == ly:
                     h = self.h
                     self.edges["C"].height = min(self.h, self.hi)
@@ -317,7 +314,7 @@ to remove the floor for this compartment.
                 start = end
 
         self.ctx.restore()
-        self.rectangularWall(10, max(self.h, self.hi, self.h_alt), "ffef", move="up only")
+        self.rectangularWall(10, max(self.h, self.hi, self.hi_alt), "ffef", move="up only")
         self.ctx.save()
 
         # Vertical Walls
@@ -336,10 +333,10 @@ to remove the floor for this compartment.
                     break
 
                 if self.vwalls[start][x] == 2:
-                    h = self.h_alt
-                    self.edges["C"].height = self.h_alt
-                    self.edges["D"].height = self.h_alt
-                    self.edges["s"].depth = self.h_alt / 2.0
+                    h = self.hi_alt
+                    self.edges["C"].height = self.hi_alt
+                    self.edges["D"].height = self.hi_alt
+                    self.edges["s"].depth = self.hi_alt / 2.0
                 elif x == 0 or x == lx:
                     h = self.h
                     self.edges["C"].height = min(self.h, self.hi)
@@ -411,7 +408,7 @@ to remove the floor for this compartment.
                 start = end
 
         self.ctx.restore()
-        self.rectangularWall(10, max(self.h, self.hi, self.h_alt), "ffef", move="up only")
+        self.rectangularWall(10, max(self.h, self.hi, self.hi_alt), "ffef", move="up only")
 
     def base_plate(self, callback=None, move=None):
         lx = len(self.x)

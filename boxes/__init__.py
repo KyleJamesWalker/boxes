@@ -509,15 +509,20 @@ class Boxes:
         * boolarg: outside
         * str (selection): nema_mount
         """
-        for arg in l:
-            kw[arg] = None
-        for arg, default in kw.items():
+        args = list(l)
+        for arg in kw:
+            if arg not in args:
+                args.append(arg)
+
+        group = self.argparser._action_groups[1]
+        for arg in args:
+            default = kw.get(arg)
             if arg == "x":
                 if default is None: default = 100.0
                 help = "inner width in mm"
                 if "outside" in kw:
                     help += " (unless outside selected)"
-                self.argparser.add_argument(
+                group.add_argument(
                     "--x", action="store", type=float, default=default,
                     help=help)
             elif arg == "y":
@@ -525,24 +530,24 @@ class Boxes:
                 help = "inner depth in mm"
                 if "outside" in kw:
                     help += " (unless outside selected)"
-                self.argparser.add_argument(
+                group.add_argument(
                     "--y", action="store", type=float, default=default,
                     help=help)
             elif arg == "sx":
                 if default is None: default = "50*3"
-                self.argparser.add_argument(
+                group.add_argument(
                     "--sx", action="store", type=argparseSections,
                     default=str(default),
                     help="""sections left to right in mm [\U0001F6C8](https://florianfesti.github.io/boxes/html/usermanual.html#section-parameters)""")
             elif arg == "sy":
                 if default is None: default = "50*3"
-                self.argparser.add_argument(
+                group.add_argument(
                     "--sy", action="store", type=argparseSections,
                     default=str(default),
                     help="""sections back to front in mm [\U0001F6C8](https://florianfesti.github.io/boxes/html/usermanual.html#section-parameters)""")
             elif arg == "sh":
                 if default is None: default = "50*3"
-                self.argparser.add_argument(
+                group.add_argument(
                     "--sh", action="store", type=argparseSections,
                     default=str(default),
                     help="""sections bottom to top in mm [\U0001F6C8](https://florianfesti.github.io/boxes/html/usermanual.html#section-parameters)""")
@@ -551,17 +556,22 @@ class Boxes:
                 help = "inner height in mm"
                 if "outside" in kw:
                     help += " (unless outside selected)"
-                self.argparser.add_argument(
+                group.add_argument(
                     "--h", action="store", type=float, default=default,
                     help=help)
             elif arg == "hi":
                 if default is None: default = 0.0
-                self.argparser.add_argument(
+                group.add_argument(
                     "--hi", action="store", type=float, default=default,
                     help="inner height of inner walls in mm (unless outside selected)(leave to zero for same as outer walls)")
+            elif arg == "hi_alt":
+                if default is None: default = 0.0
+                group.add_argument(
+                    "--hi_alt", action="store", type=float, default=default,
+                    help="alternate height of inner walls in mm. Use '=' or ':' in layout to use this height.")
             elif arg == "hole_dD":
                 if default is None: default = "3.5:6.5"
-                self.argparser.add_argument(
+                group.add_argument(
                     "--hole_dD", action="store", type=argparseSections, default=default,
                     help="mounting hole diameter (shaft:head) in mm [\U0001F6C8](https://florianfesti.github.io/boxes/html/usermanual.html#mounting-holes)")
             elif arg == "bottom_edge":
@@ -570,7 +580,7 @@ class Boxes:
                 if len(default) > 1:
                     choices = default
                     default = choices[0]
-                self.argparser.add_argument(
+                group.add_argument(
                     "--bottom_edge", action="store",
                     type=ArgparseEdgeType(choices), choices=list(choices),
                     default=default,
@@ -581,18 +591,18 @@ class Boxes:
                 if len(default) > 1:
                     choices = default
                     default = choices[0]
-                self.argparser.add_argument(
+                group.add_argument(
                     "--top_edge", action="store",
                     type=ArgparseEdgeType(choices), choices=list(choices),
                     default=default, help="edge type for top edge")
             elif arg == "outside":
                 if default is None: default = True
-                self.argparser.add_argument(
+                group.add_argument(
                     "--outside", action="store", type=boolarg, default=default,
                     help="treat sizes as outside measurements [\U0001F6C8](https://florianfesti.github.io/boxes/html/usermanual.html#outside)")
             elif arg == "nema_mount":
                 if default is None: default = 23
-                self.argparser.add_argument(
+                group.add_argument(
                     "--nema_mount", action="store",
                     type=int, choices=sorted(self.nema_sizes.keys()),
                     default=default, help="NEMA size of motor")
